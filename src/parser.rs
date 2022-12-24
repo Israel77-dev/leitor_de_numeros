@@ -1,3 +1,6 @@
+/// Parser responsável por gerar uma sequência de caracteres correspondente às
+/// leituras dos números em português.
+
 // Gramática dos números em português, para leitura dos números entre 0 e 999 999 999 999 999 999 999 (classe dos quintilhões):
 // número ::= [classe] [sufixo-de-classe];
 // classe ::= "zero" | [dez-a-dezenove] | ([centena] "e" [dezena] "e" unidade) ;
@@ -7,34 +10,31 @@
 // dez-a-dezenove ::= "dez" | "onze" | "doze" | "treze" | "catorze" | "quinze" | "dezesseis" | "dezessete" | "dezoito" | "dezenove";
 // unidade ::=  "um" | "dois" | "três" | "quatro" | "cinco" | "seis" | "sete" | "oito" | "nove";
 
-// 3 -> três
-// 18 -> dezoito
-// 97 -> noventa e sete
-// 946 -> novecentos e quarenta e seis
-// 1000 -> mil
-// 1 285 -> mil duzentos e oitenta e cinco
-// 15 987 -> quinze mil novecentos e oitenta e sete
-// 446 744 073 709 551 616 -> Quatrocentos e quarenta e seis quatrilhões setecentos e quarenta e quatro trilhões setenta e três bilhões setecentos e nove milhões quinhentos e cinquenta e um mil seicentos e dezesseis
-
-fn sufixo_classe(id: u8, plural: bool) -> &'static str {
-    match (id, plural) {
-        (0, _) => "",
-        (1, _) => " mil ",
-        (2, false) => " milhão ",
-        (2, true) => " milhões ",
-        (3, false) => " bilhão ",
-        (3, true) => " bilhões ",
-        (4, false) => " trilhão ",
-        (4, true) => " trilhões ",
-        (5, false) => " quatrilhão ",
-        (5, true) => " quatrilhões ",
-        (6, false) => " quintilhão ",
-        (6, true) => " quintilhões ",
-        _ => panic!("Valor inválido"),
+/// Recebe um número entre 0 e 999 999 999 999 999 999 999 (classe dos quintilhões)
+/// e retorna sua leitura em português.
+///
+/// Exemplo:
+/// ```
+/// assert_eq!(ler_numero(0), "zero");
+/// assert_eq!(ler_numero(7), "sete");
+/// assert_eq!(ler_numero(1232), "mil duzentos e trinta e dois");
+/// assert_eq!(ler_numero(10375), "dez mil trezentos e setenta e cinco");
+/// assert_eq!(
+///     ler_numero(2693412),
+///     "dois milhões seiscentos e noventa e três mil quatrocentos e doze"
+/// );
+/// assert_eq!(ler_numero(1035), "mil e trinta e cinco");
+/// assert_eq!(ler_numero(1_000_035), "um milhão e trinta e cinco");
+/// assert_eq!(
+///     ler_numero(3_465_000),
+///     "três milhões quatrocentos e sessenta e cinco mil"
+/// );
+/// ```
+pub fn ler_numero(numero: u128) -> Option<String> {
+    if numero > 999_999_999_999_999_999_999 {
+        return None;
     }
-}
 
-pub fn ler_numero(numero: u128) -> String {
     let classes = extrair_classes(numero);
     let mut leitura = String::new();
     let num_classes = classes.len();
@@ -63,7 +63,36 @@ pub fn ler_numero(numero: u128) -> String {
         }
     }
 
-    leitura.trim_end().to_owned()
+    Some(leitura.trim_end().to_owned())
+}
+
+/// Retorna o sufixo de classe baseado em um id (0 para unidades simples, 1 para milhares, etc.).
+/// Para facilitar a geração da leitura dos numerais, o sufixo é delimitado por um espaço antes e
+/// depois da palavra.
+///
+/// Exemplos
+///```
+/// let milhoes = sufixo_classe(2, true);
+/// let bilhao = sufixo_classe(3, false);
+/// assert_eq!(milhoes, " milhões ");
+/// assert_eq!(bilhao, " bilhão ");
+/// ```
+fn sufixo_classe(id: u8, plural: bool) -> &'static str {
+    match (id, plural) {
+        (0, _) => "",
+        (1, _) => " mil ",
+        (2, false) => " milhão ",
+        (2, true) => " milhões ",
+        (3, false) => " bilhão ",
+        (3, true) => " bilhões ",
+        (4, false) => " trilhão ",
+        (4, true) => " trilhões ",
+        (5, false) => " quatrilhão ",
+        (5, true) => " quatrilhões ",
+        (6, false) => " quintilhão ",
+        (6, true) => " quintilhões ",
+        _ => panic!("Valor inválido"),
+    }
 }
 
 /// Retorna a leitura de um número entre 0 e 999
@@ -128,7 +157,13 @@ fn ler_classe(numero: u16) -> String {
 }
 
 /// Extrai a leitura das classes sem especificar os sufixos,
-/// retornando-as da maior para a menor
+/// retornando um vetor contendo as classes, da maior para a menor.
+///
+/// Exemplo:
+/// ```
+/// let classes = extrair_classes(12_387_459);
+/// assert_eq!(classes, vec![12, 387, 459]);
+/// ```
 fn extrair_classes(numero: u128) -> Vec<u16> {
     let mut resposta = vec![];
     let mut n = numero;
@@ -145,36 +180,4 @@ fn extrair_classes(numero: u128) -> Vec<u16> {
 
     resposta.reverse();
     resposta
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn lista_classes() {
-        assert_eq!(extrair_classes(0), vec![0]);
-        assert_eq!(extrair_classes(3), vec![3]);
-        assert_eq!(extrair_classes(145), vec![145]);
-        assert_eq!(extrair_classes(15_692), vec![15, 692]);
-        assert_eq!(extrair_classes(1_935_688), vec![1, 935, 688]);
-    }
-
-    #[test]
-    fn leitura_de_numeros() {
-        assert_eq!(ler_numero(0), "zero");
-        assert_eq!(ler_numero(7), "sete");
-        assert_eq!(ler_numero(1232), "mil duzentos e trinta e dois");
-        assert_eq!(ler_numero(10375), "dez mil trezentos e setenta e cinco");
-        assert_eq!(
-            ler_numero(2693412),
-            "dois milhões seiscentos e noventa e três mil quatrocentos e doze"
-        );
-        assert_eq!(ler_numero(1035), "mil e trinta e cinco");
-        assert_eq!(ler_numero(1_000_035), "um milhão e trinta e cinco");
-        assert_eq!(
-            ler_numero(3_465_000),
-            "três milhões quatrocentos e sessenta e cinco mil"
-        );
-    }
 }
