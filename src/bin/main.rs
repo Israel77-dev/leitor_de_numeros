@@ -1,6 +1,6 @@
-mod parser;
-
 use std::env;
+
+use leitor_de_numeros::parser::parser;
 
 fn main() {
     let args: Vec<_> = env::args().collect();
