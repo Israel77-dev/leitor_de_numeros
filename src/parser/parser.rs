@@ -24,6 +24,7 @@
 ///     ler_numero(2693412).unwrap(),
 ///     "dois milhões seiscentos e noventa e três mil quatrocentos e doze"
 /// );
+/// assert_eq!(ler_numero(3200).unwrap(), "três mil e duzentos");
 /// assert_eq!(ler_numero(1035).unwrap(), "mil e trinta e cinco");
 /// assert_eq!(ler_numero(1_000_035).unwrap(), "um milhão e trinta e cinco");
 /// assert_eq!(
@@ -41,8 +42,8 @@ pub fn ler_numero(numero: u128) -> Option<String> {
     let num_classes = classes.len();
     let mut id_classe = (classes.len() - 1) as u8;
 
-    for classe in classes {
-        leitura.push_str(&match (classe, id_classe, num_classes) {
+    for valor_classe in classes {
+        leitura.push_str(&match (valor_classe, id_classe, num_classes) {
             // Número zero
             (0, 0, 1) => "zero".to_owned(),
             // Classe nula não é lida
@@ -50,13 +51,14 @@ pub fn ler_numero(numero: u128) -> Option<String> {
             // 1000, é lido apenas como mil e não um mil
             (1, 1, _) => "mil ".to_owned(),
             // Classe das unidades simples (sem sufixo)
-            (c, 0, 1) => ler_classe(c),
-            // Classe das unidades simples com valor menor que 100 é prefixada com o conectivo "e"
-            (c, 0, _) if c < 100 => format!("e {}", ler_classe(c)),
+            (v, 0, 1) => ler_classe(v),
+            // Classe das unidades simples deve ser prefixada com "e" caso seja menor que uma centena
+            // ou quando o número termina em uma centena.
+            (v, 0, _) if (v < 100 || v % 100 == 0) => format!("e {}", ler_classe(v)),
             // Caso singular (exceto mil)
             (1, i, _) => format!("um{}", sufixo_classe(i, false)),
             // Demais casos (plural)
-            (c, i, _) => format!("{}{}", ler_classe(c), sufixo_classe(i, true)),
+            (v, i, _) => format!("{}{}", ler_classe(v), sufixo_classe(i, true)),
         });
 
         if id_classe > 0 {
