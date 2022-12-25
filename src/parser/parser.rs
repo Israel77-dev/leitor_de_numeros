@@ -15,18 +15,19 @@
 ///
 /// Exemplo:
 /// ```
-/// assert_eq!(ler_numero(0), "zero");
-/// assert_eq!(ler_numero(7), "sete");
-/// assert_eq!(ler_numero(1232), "mil duzentos e trinta e dois");
-/// assert_eq!(ler_numero(10375), "dez mil trezentos e setenta e cinco");
+/// # use leitor_de_numeros::parser::parser::ler_numero;
+/// assert_eq!(ler_numero(0).unwrap(), "zero");
+/// assert_eq!(ler_numero(7).unwrap(), "sete");
+/// assert_eq!(ler_numero(1232).unwrap(), "mil duzentos e trinta e dois");
+/// assert_eq!(ler_numero(10375).unwrap(), "dez mil trezentos e setenta e cinco");
 /// assert_eq!(
-///     ler_numero(2693412),
+///     ler_numero(2693412).unwrap(),
 ///     "dois milhões seiscentos e noventa e três mil quatrocentos e doze"
 /// );
-/// assert_eq!(ler_numero(1035), "mil e trinta e cinco");
-/// assert_eq!(ler_numero(1_000_035), "um milhão e trinta e cinco");
+/// assert_eq!(ler_numero(1035).unwrap(), "mil e trinta e cinco");
+/// assert_eq!(ler_numero(1_000_035).unwrap(), "um milhão e trinta e cinco");
 /// assert_eq!(
-///     ler_numero(3_465_000),
+///     ler_numero(3_465_000).unwrap(),
 ///     "três milhões quatrocentos e sessenta e cinco mil"
 /// );
 /// ```
@@ -35,7 +36,7 @@ pub fn ler_numero(numero: u128) -> Option<String> {
         return None;
     }
 
-    let classes = extrair_classes(numero);
+    let classes = separar_classes(numero);
     let mut leitura = String::new();
     let num_classes = classes.len();
     let mut id_classe = (classes.len() - 1) as u8;
@@ -69,14 +70,6 @@ pub fn ler_numero(numero: u128) -> Option<String> {
 /// Retorna o sufixo de classe baseado em um id (0 para unidades simples, 1 para milhares, etc.).
 /// Para facilitar a geração da leitura dos numerais, o sufixo é delimitado por um espaço antes e
 /// depois da palavra.
-///
-/// Exemplos
-///```
-/// let milhoes = sufixo_classe(2, true);
-/// let bilhao = sufixo_classe(3, false);
-/// assert_eq!(milhoes, " milhões ");
-/// assert_eq!(bilhao, " bilhão ");
-/// ```
 fn sufixo_classe(id: u8, plural: bool) -> &'static str {
     match (id, plural) {
         (0, _) => "",
@@ -158,13 +151,7 @@ fn ler_classe(numero: u16) -> String {
 
 /// Extrai a leitura das classes sem especificar os sufixos,
 /// retornando um vetor contendo as classes, da maior para a menor.
-///
-/// Exemplo:
-/// ```
-/// let classes = extrair_classes(12_387_459);
-/// assert_eq!(classes, vec![12, 387, 459]);
-/// ```
-fn extrair_classes(numero: u128) -> Vec<u16> {
+fn separar_classes(numero: u128) -> Vec<u16> {
     let mut resposta = vec![];
     let mut n = numero;
 
@@ -180,4 +167,29 @@ fn extrair_classes(numero: u128) -> Vec<u16> {
 
     resposta.reverse();
     resposta
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn separar_classes() {
+        let classes = super::separar_classes(12_387_459);
+        assert_eq!(classes, vec![12, 387, 459]);
+    }
+
+    #[test]
+    fn ler_classe() {
+        assert_eq!(super::ler_classe(545), "quinhentos e quarenta e cinco");
+        assert_eq!(super::ler_classe(0), "zero");
+        assert_eq!(super::ler_classe(3), "três");
+        assert_eq!(super::ler_classe(14), "catorze");
+    }
+
+    #[test]
+    fn sufixo_classe() {
+        let milhoes = super::sufixo_classe(2, true);
+        let bilhao = super::sufixo_classe(3, false);
+        assert_eq!(milhoes, " milhões ");
+        assert_eq!(bilhao, " bilhão ");
+    }
 }
