@@ -40,9 +40,11 @@ pub fn ler_numero(numero: u128) -> Option<String> {
     let classes = separar_classes(numero);
     let mut leitura = String::new();
     let num_classes = classes.len();
-    let mut id_classe = (classes.len() - 1) as u8;
+    let mut id_classe = classes.len() as u8;
 
     for valor_classe in classes {
+        id_classe -= 1;
+
         leitura.push_str(&match (valor_classe, id_classe, num_classes) {
             // Número zero
             (0, 0, 1) => "zero".to_owned(),
@@ -60,10 +62,6 @@ pub fn ler_numero(numero: u128) -> Option<String> {
             // Demais casos (plural)
             (v, i, _) => format!("{}{}", ler_classe(v), sufixo_classe(i, true)),
         });
-
-        if id_classe > 0 {
-            id_classe -= 1;
-        }
     }
 
     Some(leitura.trim_end().to_owned())
